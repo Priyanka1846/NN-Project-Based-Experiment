@@ -28,116 +28,70 @@ If the model is not performing well, experiment with different architectures, re
 Visualize the training/validation loss and accuracy over epochs to understand the training process. Visualize some misclassified examples to gain insights into potential improvements.
 
 # Program:
-```
-NAME : PRIYANKA K
-REG.NO : 212223230162
-```
-```
+
+#### DEVELOPED BY:PRIYANKA K
+#### REGISTER NUMBER:212223230162
+```PY
 import numpy as np
-from tensorflow import keras
-from tensorflow.keras import layers
-from tensorflow.keras.datasets import mnist
 import tensorflow as tf
+from tensorflow.keras.datasets import mnist
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense
+from tensorflow.keras.utils import to_categorical
 import matplotlib.pyplot as plt
-from tensorflow.keras import utils
-import pandas as pd
-from sklearn.metrics import classification_report,confusion_matrix
-from tensorflow.keras.preprocessing import image
+from sklearn.metrics import confusion_matrix, classification_report
 
-(X_train, y_train), (X_test, y_test) = mnist.load_data()
-(X_train, y_train), (X_test, y_test) = mnist.load_data()
-X_test.shape
-single_image= X_train[0]
-single_image.shape
-plt.imshow(single_image,cmap='gray')
-y_train.shape
-X_train.min()
-X_train.max()
-X_train_scaled = X_train/255.0
-X_test_scaled = X_test/255.0
-X_train_scaled.min()
-X_train_scaled.max()
-y_train[0]
-y_train_onehot = utils.to_categorical(y_train,10)
-y_test_onehot = utils.to_categorical(y_test,10)
-type(y_train_onehot)
-y_train_onehot.shape
-single_image = X_train[500]
-plt.imshow(single_image,cmap='gray')
-y_train_onehot[500]
+# Step 1: Dataset Acquisition
+(x_train, y_train), (x_test, y_test) = mnist.load_data()
 
-X_train_scaled = X_train_scaled.reshape(-1,28,28,1)
-X_test_scaled = X_test_scaled.reshape(-1,28,28,1)
+# Step 2: Data Preprocessing
+x_train = x_train / 255.0
+x_test = x_test / 255.0
 
-model = keras.Sequential()
-model.add(layers.Input(shape=(28,28,1)))
-model.add(layers.Conv2D(filters=32,kernel_size=(5,5),activation='relu'))
-model.add(layers.MaxPool2D(pool_size=(3,3)))
-model.add(layers.Flatten())
-model.add(layers.Dense(32,activation='relu'))
-model.add(layers.Dense(16,activation='relu'))
-model.add(layers.Dense(10,activation='softmax'))
+x_train_flat = x_train.reshape((-1, 784))
+x_test_flat = x_test.reshape((-1, 784))
 
-model.summary()
-# Choose the appropriate parameters
-model.compile(loss='categorical_crossentropy',
-              optimizer='adam',
-              metrics='accuracy')
-model.fit(X_train_scaled ,y_train_onehot, epochs=5,
-          batch_size=64,
-          validation_data=(X_test_scaled,y_test_onehot))
-metrics = pd.DataFrame(model.history.history)
-metrics.head()
-metrics[['accuracy','val_accuracy']].plot()
+# Step 3: Data Splitting
+x_train_split, x_val_split = x_train_flat[:50000], x_train_flat[50000:]
+y_train_split, y_val_split = y_train[:50000], y_train[50000:]
 
-metrics[['loss','val_loss']].plot()
-x_test_predictions = np.argmax(model.predict(X_test_scaled), axis=1)
+# Step 4: Model Architecture
+model = Sequential([
+    Dense(128, activation='relu', input_shape=(784,)),
+    Dense(64, activation='relu'),
+    Dense(10, activation='softmax')
+])
 
-print(confusion_matrix(y_test,x_test_predictions))
+# Step 5: Compile the Model
+model.compile(optimizer='adam',
+              loss='sparse_categorical_crossentropy',
+              metrics=['accuracy'])
 
-print(classification_report(y_test,x_test_predictions))
+# Step 6: Training
+history = model.fit(x_train_split, y_train_split, epochs=10, batch_size=64, validation_data=(x_val_split, y_val_split))
 
-#Prediction for a single input
+# Step 7: Evaluation
+test_loss, test_acc = model.evaluate(x_test_flat, y_test)
+print("Test Accuracy:", test_acc)
+y_pred = model.predict_classes(x_test_flat)
+conf_matrix = confusion_matrix(y_test, y_pred)
+class_report = classification_report(y_test, y_pred)
+print("Confusion Matrix:")
+print(conf_matrix)
+print("\nClassification Report:")
+print(class_report)
 
-img = image.load_img('/content/3-Figure3-1.png')
-type(img)
-img = image.load_img('/content/3-Figure3-1.png')
-img_tensor = tf.convert_to_tensor(np.asarray(img))
-img_28 = tf.image.resize(img_tensor,(28,28))
-img_28_gray = tf.image.rgb_to_grayscale(img_28)
-img_28_gray_scaled = img_28_gray.numpy()/255.0
-x_single_prediction = np.argmax(
-    model.predict(img_28_gray_scaled.reshape(1,28,28,1)),
-     axis=1)
-print(x_single_prediction)
-
-plt.imshow(img_28_gray_scaled.reshape(28,28),cmap='gray')
-img_28_gray_inverted = 255.0-img_28_gray
-img_28_gray_inverted_scaled = img_28_gray_inverted.numpy()/255.0
-x_single_prediction = np.argmax(
-    model.predict(img_28_gray_inverted_scaled.reshape(1,28,28,1)),
-     axis=1)
-
-print(x_single_prediction)
+# Step 8: Visualization
+plt.plot(history.history['accuracy'], label='accuracy')
+plt.plot(history.history['val_accuracy'], label='val_accuracy')
+plt.xlabel('Epoch')
+plt.ylabel('Accuracy')
+plt.legend(loc='lower right')
+plt.show()
 ```
 
 ## Output:
-![329769324-6c872465-4df0-40ae-b584-a577e42c758a](https://github.com/Aravindsamy04/NN-Project-Based-Experiment/assets/113497037/dc516a7a-ea76-4a1f-b3b8-f9fb9cfdea03)
-![329769152-78af1262-11e9-4420-859e-fca03478b8cb](https://github.com/Aravindsamy04/NN-Project-Based-Experiment/assets/113497037/a9dcdcd5-a306-40f3-9bc3-cb307af16cb9)
-![329769159-4f69500b-f140-4e16-9470-cae5a426bec1](https://github.com/Aravindsamy04/NN-Project-Based-Experiment/assets/113497037/66cb193b-71d2-4705-bf97-e7ea81dcfd9a)
 
-![329769185-a76d7b6d-c9b0-41fd-9770-e72d982a1133](https://github.com/Aravindsamy04/NN-Project-Based-Experiment/assets/113497037/f9967b38-9c6a-4b9a-a8ce-3b629c42a90a)
-![329769206-e14f6351-ac3f-4e71-9f59-36a04e793a00](https://github.com/Aravindsamy04/NN-Project-Based-Experiment/assets/113497037/11631c22-2e28-4141-b5d4-84ba9c8a0727)
-![329769239-7d2a79ae-24ba-423d-aab9-d947f72a69ac](https://github.com/Aravindsamy04/NN-Project-Based-Experiment/assets/113497037/5ace1a20-3f84-450b-a683-a60d5a2bc98f)
+![image](https://github.com/shalinikannan23/NN-Project-Based-Experiment/assets/118656529/40135ae0-e318-4470-a1d9-e338b29ac61c)
 
-
-
-
-
-
-
-
-
-
-## result
- Thus the program to Build a Multilayer Perceptron (MLP) to classify handwritten digits in python is excecuted successfully
+![image](https://github.com/shalinikannan23/NN-Project-Based-Experiment/assets/118656529/2011eca4-6b2d-456f-98e6-1f820ff3f468)
